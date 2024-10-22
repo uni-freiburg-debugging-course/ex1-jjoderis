@@ -22,6 +22,7 @@ int main(int argc, const char **argv) {
 
   while (!input.eof()) {
     std::vector<Token> tokens = tokenize(input);
+    if (!tokens.size()) continue;
 
     try {
       ASTree tree{tokens};

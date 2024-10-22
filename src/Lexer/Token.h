@@ -2,18 +2,19 @@
 #define TOKEN_H
 
 #include <ostream>
+
 enum TokenType { LeftBracket, RightBracket, Number, Operator };
 enum OperatorType { ADD, SUB, MUL, SIM };
 
 class TokenFactory;
 
 class Token {
-public:
+ public:
   TokenType getType() const;
   int getValue() const;
   OperatorType getOperatorType() const;
 
-private:
+ private:
   Token();
 
   TokenType m_type;
@@ -26,7 +27,7 @@ private:
 };
 
 class TokenFactory {
-public:
+ public:
   static Token createLeftBracket();
   static Token createRightBracket();
   static Token createNumberToken(int value);

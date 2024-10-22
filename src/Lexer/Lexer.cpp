@@ -3,6 +3,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #include <istream>
 #include <sstream>
 
@@ -23,6 +24,13 @@
  * ARGUMENT   -> NUMBER | EXPRESSION
  *
  * NUMBER     -> int32
+ *
+ * it seems that simplify must and can only be the operator in the root expression
+ *
+ * whitespace seems to be optional if it is not necessary (e.g. between the brackets of two expression as arguments to
+ * an operation and in places where whitespace is valid it seems to not matter how much whitespace is used
+ *
+ * whitespace is also allowed in front of operators and before closing brackets
  *
  */
 
@@ -46,7 +54,6 @@ void skipWhiteSpace(std::istream &stream) {
     getNextCharacter(stream);
   }
 }
-void parseExpression(std::istream &stream, std::vector<Token> &tokens);
 
 void parseNumber(std::istream &stream, std::vector<Token> &tokens) {
   int value = 0;
@@ -54,8 +61,6 @@ void parseNumber(std::istream &stream, std::vector<Token> &tokens) {
   do {
     value *= 10;
     switch (getNextCharacter(stream)) {
-      // TODO: this might be simplified by doing const char* valid = "0123456789"; and then iterating over it to check
-      // if the char is in the string and throw if not or add the index if it is
       case '0':
         break;
       case '1':
@@ -96,7 +101,6 @@ void parseNumber(std::istream &stream, std::vector<Token> &tokens) {
 
 void parseArguments(int numArguments, std::istream &stream, std::vector<Token> &tokens) {
   for (int i = 0; i < numArguments; ++i) {
-    // TODO: check if more than one space and characters like tab are allowed
     skipWhiteSpace(stream);
 
     switch (stream.peek()) {
@@ -136,19 +140,21 @@ void parseSubtract(std::istream &stream, std::vector<Token> &tokens) {
 }
 
 void parseSimplify(std::istream &stream, std::vector<Token> &tokens) {
-  // TODO: could just use a const char*
-  std::string expected{"simplify"};
+  std::string expected{"implify"};
 
   for (size_t i = 0; i < expected.length(); ++i) {
     if (!getExpectedCharacter(expected.at(i), stream)) {
       // move the stream backwards for the error message to show the start of the simplify string as the point of the
-      // erroneous operation
-      stream.seekg(-i, stream.cur);
+      // unknown operation
+      stream.seekg(-(i + 1), stream.cur);
       throw "Unexpected operator. Expected one of +,-,*,simplify!";
     }
   }
 
-  if (!std::isspace(stream.peek())) throw "Unexpected operator. Expected one of +,-,*,simplify!";
+  if (!std::isspace(stream.peek())) {
+    stream.seekg(-7, stream.cur);
+    throw "Unexpected operator. Expected one of +,-,*,simplify!";
+  }
 
   tokens.push_back(TokenFactory::createOperatorToken(SIM));
 
@@ -156,7 +162,6 @@ void parseSimplify(std::istream &stream, std::vector<Token> &tokens) {
 }
 
 void parseOperation(std::istream &stream, std::vector<Token> &tokens) {
-  // TODO: is whitespace here an error or ignored
   skipWhiteSpace(stream);
 
   switch (getNextCharacter(stream)) {
@@ -178,7 +183,6 @@ void parseOperation(std::istream &stream, std::vector<Token> &tokens) {
 }
 
 void parseExpression(std::istream &stream, std::vector<Token> &tokens) {
-  // TODO: is whitespace here an error or ignored
   skipWhiteSpace(stream);
   char c = getExpectedCharacter('(', stream);
   if (!c) throw "Expected '(' at the start of an expression!";
@@ -187,7 +191,6 @@ void parseExpression(std::istream &stream, std::vector<Token> &tokens) {
 
   parseOperation(stream, tokens);
 
-  // TODO: is whitespace here an error or ignored
   skipWhiteSpace(stream);
   c = getExpectedCharacter(')', stream);
   if (!c) throw "Expected ')' at the end of an expression!";
@@ -195,20 +198,40 @@ void parseExpression(std::istream &stream, std::vector<Token> &tokens) {
   tokens.push_back(TokenFactory::createRightBracket());
 }
 
+bool skipEmptiness(std::istream &stream) {
+  while (std::isspace(stream.peek()) && !stream.eof()) {
+    char s = stream.get();
+    if (s == '\n') return true;
+  }
+
+  if (stream.eof()) return true;
+
+  return false;
+}
+
 std::vector<Token> tokenize(std::istream &stream) {
   std::vector<Token> tokens{};
 
+  if (skipEmptiness(stream)) return tokens;
+
   try {
     parseExpression(stream, tokens);
+    skipEmptiness(stream);
     // TODO: maybe check if there is something else than whitespace after the
     // closing bracket which could be ignored or result in an error
   } catch (const char *msg) {
-    int prev = std::min(10, stream.cur - stream.beg);
-    int post = std::min(10, stream.end - stream.cur);
-    stream.seekg(-prev, stream.cur);
+    // show the expression for which parsing failed and mark the char at which parsing failed
+    int errorPos = stream.tellg();
+    while (stream.tellg() && stream.peek() != '\n') stream.seekg(-1, stream.cur);
+    if (stream.peek() == '\n') stream.get();
+    int startPos = stream.tellg();
     std::string context{};
-    for (int i = 0; i < prev + 1 + post; ++i) context.append(1, stream.get());
-    throw ParsingException(msg, context, prev);
+
+    while (!stream.eof() && stream.peek() != '\n') {
+      context.append(1, stream.get());
+    }
+
+    throw ParsingException(msg, context, errorPos - startPos - 1);
   }
 
   return tokens;
