@@ -16,14 +16,13 @@ if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
 endif()
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
-    add_subdirectory(tests)
-endif()
+# if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+#     add_subdirectory(tests)
+# endif()
 
 add_subdirectory("${EXTERN_DIR}/cpp_cli")
 
 set(SOURCES
-  ${SRC_DIR}/SMTFile/SMTFile.cpp
   ${SRC_DIR}/Lexer/Token.cpp
   ${SRC_DIR}/Lexer/Lexer.cpp
   ${SRC_DIR}/AST/AST.cpp

@@ -1,18 +1,18 @@
 #include "Token.h"
 
+#include <cassert>
+
 Token::Token() {}
 
 TokenType Token::getType() const { return m_type; }
 int Token::getValue() const {
-  if (m_type != Number)
-    throw "Invalid access to value member of a token that does not represent a "
-          "number!";
+  assert(m_type == Number && "Cannot access the value for a token that does not represent a number!");
+
   return m_value;
 }
 OperatorType Token::getOperatorType() const {
-  if (m_type != Operator)
-    throw "Invalid access to the operator type of a token that does not "
-          "represent an operator!";
+  assert(m_type == Operator && "Cannot access the operator type of a token that does not represent an operator!");
+
   return m_op;
 }
 
@@ -20,45 +20,45 @@ std::ostream &operator<<(std::ostream &out, const Token &tok) {
   out << "{ type: ";
 
   switch (tok.getType()) {
-  case LeftBracket:
-    out << "'(' ";
-    break;
-  case RightBracket:
-    out << "')' ";
-    break;
-  case Number:
-    out << "'Number', ";
-    break;
-  case Operator:
-    out << "'Operator', ";
-    break;
+    case LeftBracket:
+      out << "'(' ";
+      break;
+    case RightBracket:
+      out << "')' ";
+      break;
+    case Number:
+      out << "'Number', ";
+      break;
+    case Operator:
+      out << "'Operator', ";
+      break;
   }
 
   switch (tok.getType()) {
-  case Number:
-    out << "value: " << tok.getValue() << ' ';
-    break;
-  case Operator:
-    out << "value: ";
+    case Number:
+      out << "value: " << tok.getValue() << ' ';
+      break;
+    case Operator:
+      out << "value: ";
 
-    switch (tok.getOperatorType()) {
-    case ADD:
-      out << "'+' ";
-      break;
-    case MUL:
-      out << "'*' ";
-      break;
-    case SUB:
-      out << "'-' ";
-      break;
-    case SIM:
-      out << "'simplify' ";
-      break;
-    }
+      switch (tok.getOperatorType()) {
+        case ADD:
+          out << "'+' ";
+          break;
+        case MUL:
+          out << "'*' ";
+          break;
+        case SUB:
+          out << "'-' ";
+          break;
+        case SIM:
+          out << "'simplify' ";
+          break;
+      }
 
-    break;
-  default:
-    break;
+      break;
+    default:
+      break;
   }
 
   out << " }";

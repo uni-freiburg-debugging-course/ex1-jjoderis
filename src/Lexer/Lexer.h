@@ -1,48 +1,24 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "Lexer/Token.h"
 #include <exception>
+#include <istream>
 #include <string>
 #include <vector>
 
-class Lexer {
-public:
-  Lexer();
+#include "Lexer/Token.h"
 
-  std::vector<Token> &parse(const std::string &expression);
-
-private:
-  void parseExpression();
-
-  void parseOperation();
-
-  void parseAdd();
-  void parseMultiply();
-  void parseSubtract();
-  void parseSimplify();
-
-  void parseArguments(int numArguments);
-
-  void parseNumber();
-
-  void skipWhiteSpace();
-
-  std::string m_expression;
-  size_t m_position{0};
-  std::vector<Token> m_tokens{};
-};
+std::vector<Token> tokenize(std::istream &stream);
 
 class ParsingException : public std::exception {
-public:
+ public:
   ParsingException() = delete;
-  ParsingException(const char *msg, const std::string &context,
-                   size_t position);
+  ParsingException(const char *msg, const std::string &context, size_t position);
   ~ParsingException();
 
   virtual const char *what() const noexcept override;
 
-private:
+ private:
   std::string m_message{};
 };
 
